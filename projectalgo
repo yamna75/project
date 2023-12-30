@@ -1,0 +1,56 @@
+#include "raylib.h"
+
+#define MAX_ELEMENTS 100
+
+// Fonction pour effectuer le tri par insertion
+void insertionSort(int arr[], int n) {
+    int i, key, j;
+    for (i = 1; i < n; i++) {
+        key = arr[i];
+        j = i - 1;
+
+        // Déplacement des éléments de arr[0..i-1] qui sont plus grands que key
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        arr[j + 1] = key;
+    }
+}
+
+int main() {
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+
+    InitWindow(screenWidth, screenHeight, "Tri par Insertion - Interface Graphique");
+
+    int elements[MAX_ELEMENTS];
+    int numElements = 50; // Nombre d'éléments dans le tableau
+    int i;
+
+    // Initialisation du tableau avec des valeurs aléatoires
+    for (i = 0; i < numElements; i++) {
+        elements[i] = GetRandomValue(0, screenHeight);
+    }
+
+    SetTargetFPS(60);
+
+    while (!WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        // Affichage des barres pour représenter les éléments à trier
+        for (i = 0; i < numElements; i++) {
+            DrawRectangle(i * (screenWidth / numElements), screenHeight - elements[i], screenWidth / numElements, elements[i], RED);
+        }
+
+        // Effectuer le tri par insertion
+        insertionSort(elements, numElements);
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+
+    return 0;
+}
