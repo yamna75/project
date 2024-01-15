@@ -1,6 +1,6 @@
 #include "raylib.h"
 #include <ctype.h>
-#include <ctype.h>
+#include <time.h>
 
 typedef enum {
     SCREEN_MAIN,
@@ -44,6 +44,25 @@ void intArrayTo2DCharArray(int *arr, int size, char arrayValues[100][20]) {
     }
 }
 
+void insertionSort(int arr[], int n) {
+    int i, key, j;
+    for (i = 1; i < n; i++) {
+        key = arr[i];
+        j = i - 1;
+
+        /* Move elements of arr[0..i-1], that are greater than key,
+           to one position ahead of their current position */
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        arr[j + 1] = key;
+    }
+}
+
+int currentKey = -1; // Global variable to hold the current key being sorted
+
+
 // Function to search for a value in an array
 // It returns true if the value is found, and sets the index parameter
 // If the value is not found, it returns false
@@ -56,11 +75,20 @@ bool searchInArray(int arr[], int size, int value, int *index) {
     }
     return false;
 }
+const int screenWidth = 1024;
+const int screenHeight = 720;
+int intArray_sort [50] = {0};
+
+
+void DrawArray(int highlightIndex, int array_size);
+void InsertionSort(int array_size);
+void Delay(float seconds);
+bool sorted = false;
+ScreenState currentScreen = SCREEN_MAIN;
 
 int main(void)
 {
-    const int screenWidth = 1024;
-    const int screenHeight = 720;
+
 
     InitWindow(screenWidth, screenHeight, "Welcome to our App");
 
@@ -113,6 +141,7 @@ int main(void)
 
     Rectangle deleteButton = { 400, 600, 120, 40 };
     Rectangle searchButton = { 550, 600, 120, 40 };
+    Rectangle searchButtonsort = {700, 600, 120, 40};
     Rectangle sortButton = { 700, 600, 120, 40 };
 
     // Button colors
@@ -137,7 +166,6 @@ int main(void)
 
     char searchText[50]; // Buffer to hold the score text
 
-    ScreenState currentScreen = SCREEN_MAIN;
     // Button for returning to the main menu from the delete screen
     Rectangle menuButton = { 250, 600, 120, 40 };
 
@@ -157,6 +185,12 @@ int main(void)
                         memset(inputText, 0, 20); // Clear the inputText
                         letterCount = 0;
                         inputFieldActive = false;
+
+                        memset(inputText_insert, 0, 20); // Clear the inputText
+                        letterCount_insert = 0;
+                        inputFieldActive_insert = false;
+                        display_flag = false;
+                        
                     }
                 } else {
                     insertButtonColor = DARKBLUE;
@@ -176,6 +210,12 @@ int main(void)
                         memset(inputText, 0, 20); // Clear the inputText
                         letterCount = 0;
                         inputFieldActive = false;
+
+                        
+                        memset(inputText_search, 0, 20); // Clear the inputText
+                        letterCount_search = 0;
+                        inputFieldActive_search = false;
+                        display_flag_search = false;
                     }
                 } else {
                     searchButtonColor = GRAY;
@@ -183,6 +223,13 @@ int main(void)
 
                 if (CheckCollisionPointRec(mousePoint, sortButton) && sortButtonEnabled) {
                     sortButtonColor = DARKGRAY;
+                    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                        currentScreen = SCREEN_SORT; // Change to delete confirmation screen
+
+                        memset(inputText, 0, 20); // Clear the inputText
+                        letterCount = 0;
+                        inputFieldActive = false;
+                    }
                 } else {
                     sortButtonColor = LIGHTGRAY;
                 }
@@ -253,6 +300,8 @@ int main(void)
                         display_flag = false;
                         memset(intArray, 0, sizeof(intArray));
                         arrayInputActive = false;
+
+
             
 
                     }
@@ -283,6 +332,9 @@ int main(void)
 
                 if (CheckCollisionPointRec(mousePoint, sortButton) ) {
                     sortButtonColor = DARKGRAY;
+                    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                        currentScreen = SCREEN_SORT; // Change to delete confirmation screen
+                    }
                 } else {
                     sortButtonColor = LIGHTGRAY;
                 }
@@ -374,9 +426,10 @@ int main(void)
                     insertButtonColor = LIGHTGRAY;
                     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                         currentScreen = SCREEN_INSERT; // Change to delete confirmation screen
-                        memset(inputText_search, 0, 20); // Clear the inputText
-                        letterCount_search = 0;
-                        inputFieldActive_search = false;
+                        memset(inputText_insert, 0, 20); // Clear the inputText
+                        letterCount_insert = 0;
+                        inputFieldActive_insert = false;
+                        display_flag = false;
                     }
                 } else {
                     insertButtonColor = GRAY;
@@ -384,6 +437,9 @@ int main(void)
 
                 if (CheckCollisionPointRec(mousePoint, sortButton) ) {
                     sortButtonColor = DARKGRAY;
+                    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                        currentScreen = SCREEN_SORT; // Change to delete confirmation screen
+                    }
                 } else {
                     sortButtonColor = LIGHTGRAY;
                 }
@@ -430,11 +486,80 @@ int main(void)
                     display_flag_search = true;
                 }
                 break;
-            case SCREEN_DELETE:
+            case SCREEN_SORT:
+                    if (CheckCollisionPointRec(mousePoint, menuButton)) {
+
+                    menuButtonColor = BLUE;
+                    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                        currentScreen = SCREEN_MAIN; // Change to main screen
+                        
+                        memset(inputText, 0, 20); // Clear the inputText
+                        letterCount = 0;
+                        inputFieldActive = false;
+
+                        memset(arrayValues, 0, sizeof(arrayValues));
+                        arraySize = 0;
+                        display_flag = false;
+                        memset(intArray_search, 0, sizeof(intArray_search));
+                        arrayInputActive = false;
+            
+
+                    }
+                    
+                    }else{menuButtonColor = DARKBLUE;}
+
+                    // Check if mouse is over buttons and change button colors
+
+                    if (CheckCollisionPointRec(mousePoint, deleteButton)) {
+                        deleteButtonColor = GRAY;
+
+                    } else {
+                        deleteButtonColor = DARKGRAY;
+                    }
+
+                    if (CheckCollisionPointRec(mousePoint, insertButton_search)) {
+                        insertButtonColor = LIGHTGRAY;
+                        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                            currentScreen = SCREEN_INSERT; // Change to delete confirmation screen
+                            memset(inputText_insert, 0, 20); // Clear the inputText
+                            letterCount_insert = 0;
+                            inputFieldActive_insert = false;
+
+                            memset(intArray, 0, sizeof(intArray));
+                            display_flag = false;
+                        }
+                    } else {
+                        insertButtonColor = GRAY;
+                    }
+
+                    if (CheckCollisionPointRec(mousePoint, searchButtonsort) ) {
+                        sortButtonColor = DARKGRAY;
+                        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                            currentScreen = SCREEN_SEARCH; // Change to delete confirmation screen
+                            memset(inputText_search, 0, 20); // Clear the inputText
+                            letterCount_search = 0;
+                            inputFieldActive_search = false;
+
+                            memset(intArray_search, 0, sizeof(intArray_search));
+                            display_flag_search = false;
+
+                                                
+                        }
+                    } else {
+                        sortButtonColor = LIGHTGRAY;
+                    }
+
+                    ConvertCharArrayToIntArray(arrayValues, intArray_sort, arraySize);
+
+                    insertionSort(intArray_sort,arraySize);
+
+                    intArrayTo2DCharArray(intArray_sort, arraySize, arrayValues);
+
 
                 break;
-            case SCREEN_SORT:
+            case SCREEN_DELETE:
 
+                
                 break;
         }
         // Start Drawing
@@ -670,8 +795,8 @@ int main(void)
                             }
                         }
                         if (search_output){
-                        sprintf(searchText, "The value : %d was found at index : %d.", newValue_search,index);
-                        DrawText(searchText, textX, textY +200, 20, GREEN);}
+                            sprintf(searchText, "The value : %d was found at index : %d.", newValue_search,index);
+                            DrawText(searchText, textX, textY +200, 20, DARKGREEN);}
                         else{
                             sprintf(searchText, "The value : %d was not found in you array.", newValue_search);
                             DrawText(searchText, textX, textY + 200, 20, RED);}   
@@ -679,10 +804,49 @@ int main(void)
 
 
                     break;
-                case SCREEN_DELETE:
+                case SCREEN_SORT:
+                    ClearBackground(RAYWHITE);
+
+                    DrawText("Insertion Sort Feature", screenWidth / 2 - MeasureText("Insertion Sort Feature", 40) / 2, 50, 40, primaryColor);
+
+                    // Draw 'Menu' button
+                    DrawRectangleRec(menuButton, menuButtonColor);
+                    DrawText("Menu", menuButton.x + 30, menuButton.y + 10, 20, WHITE);
+
+                    DrawRectangleRec(deleteButton, deleteButtonColor);
+                    DrawText("Delete", deleteButton.x + 10, deleteButton.y + 10, 20, WHITE);
+
+                    DrawRectangleRec(insertButton_search, insertButtonColor);
+                    DrawText("Insert", insertButton_search.x + 10, insertButton_search.y + 10, 20, WHITE);
+
+                    DrawRectangleRec(searchButtonsort, sortButtonColor);
+                    DrawText("Search", searchButtonsort.x + 10, searchButtonsort.y + 10, 20, WHITE);
+
+
+                    DrawText("Here is your sorted array using insertion sort :", textX, textY, 20, DARKBLUE);
+                    int line = 0;
+                    for (int i = 0; i < arraySize; i++) {
+                        // Calculate position with line breaks
+                        int x = textX + (i % maxElementsPerLine) * (arrayBoxWidth + arrayBoxSpacing);
+                        int y = textY + 40 + line * (arrayBoxHeight + arrayBoxSpacing);
+
+                        Rectangle arrayBox = {x, y, arrayBoxWidth, arrayBoxHeight};
+                        DrawRectangleRec(arrayBox, LIGHTGRAY);
+
+                        DrawText(arrayValues[i], arrayBox.x + 5, arrayBox.y + 5, 20, DARKGRAY);
+
+                        if (CheckCollisionPointRec(GetMousePosition(), arrayBox) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                            activeArrayInput = i;
+                        }
+
+                        if ((i + 1) % maxElementsPerLine == 0) {
+                            line++; // Move to next line after reaching max elements
+                        }
+
+                    }
 
                     break;
-                case SCREEN_SORT:
+                case SCREEN_DELETE:
 
                     break;
 
